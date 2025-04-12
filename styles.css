@@ -1,0 +1,27 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 10px;
+}
+.sound {
+  display: flex;
+  align-items: center;
+  margin: 5px 0;
+  padding: 10px;
+  border: 1px solid #ccc;
+}
+.sound span {
+  flex-grow: 1;
+}
+.sound button {
+  margin-left: 5px;
+  padding: 5px;
+  cursor: pointer;
+}
+.sound button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+#volume {
+  width: 100%;
+  margin-top: 10px;
+}
