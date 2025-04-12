@@ -1,0 +1,13 @@
+{
+  "name": "Synced RPG Soundboard",
+  "version": "1.0",
+  "author": "Your Name",
+  "description": "Plays synchronized music for all players",
+  "action": {
+    "url": "https://your-hosted-url/index.html",
+    "popover": {
+      "width": 400,
+      "height": 600
+    }
+  }
+}
