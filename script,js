@@ -1,0 +1,93 @@
+let currentAudio = null;
+let isMaster = false; // Флаг, мастер ли это
+
+// Инициализация Pusher
+const pusher = new Pusher('your-pusher-key', {
+  cluster: 'your-pusher-cluster'
+});
+const channel = pusher.subscribe('owlbear-sound-channel');
+
+// Загрузка звуков
+async function loadSounds() {
+  const response = await fetch('sounds.json');
+  return await response.json();
+}
+
+// Отображение списка звуков
+function displaySounds(sounds) {
+  const list = document.getElementById('sound-list');
+  list.innerHTML = '';
+  sounds.forEach(sound => {
+    const div = document.createElement('div');
+    div.className = 'sound';
+    div.innerHTML = `
+      <span>${sound.name}</span>
+      <button onclick="sendPlayCommand('${sound.url}', '${sound.name}')">▶️</button>
+      <button onclick="sendStopCommand()">⏹️</button>
+    `;
+    if (!isMaster) div.querySelectorAll('button').forEach(btn => btn.disabled = true); // Отключаем кнопки для игроков
+    list.appendChild(div);
+  });
+}
+
+// Отправка команды воспроизведения
+function sendPlayCommand(url, name) {
+  if (!isMaster) return;
+  channel.trigger('client-play-sound', { url, name });
+  playSound(url, name);
+}
+
+// Отправка команды остановки
+function sendStopCommand() {
+  if (!isMaster) return;
+  channel.trigger('client-stop-sound', {});
+  stopSound();
+}
+
+// Воспроизведение звука
+function playSound(url, name) {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  currentAudio = new Audio(url);
+  currentAudio.loop = true;
+  currentAudio.volume = document.getElementById('volume').value;
+  currentAudio.play();
+  OBR.notification.show(`Играет: ${name}`);
+}
+
+// Остановка звука
+function stopSound() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+    OBR.notification.show('Музыка остановлена');
+  }
+}
+
+// Инициализация
+OBR.onReady(async () => {
+  // Проверяем, мастер ли это (по роли в Owlbear Rodeo)
+  const player = await OBR.player.getRole();
+  isMaster = player === 'GM';
+
+  // Загружаем и отображаем звуки
+  const sounds = await loadSounds();
+  displaySounds(sounds);
+
+  // Локальная громкость
+  document.getElementById('volume').addEventListener('input', (e) => {
+    if (currentAudio) {
+      currentAudio.volume = e.target.value;
+    }
+  });
+
+  // Обработка команд от Pusher
+  channel.bind('client-play-sound', (data) => {
+    playSound(data.url, data.name);
+  });
+  channel.bind('client-stop-sound', () => {
+    stopSound();
+  });
+});
